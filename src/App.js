@@ -1,58 +1,75 @@
-import React from 'react';
-import logo from './logo.svg';
-import { Counter } from './features/counter/Counter';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import { addTodo, removeTodo } from './actions/actions'
+import { bindActionCreators } from 'redux'
+import { connect } from 'react-redux'
 
-function App() {
+
+function App(props) {
+  const { todos, removeTodo } = props
+  const [isEdits, setIsEdits] = useState([]);
+  const [changed, setChanged] = useState([]);
+
+  useEffect(() => {
+    setIsEdits(new Array(todos.length).fill(false))
+  }, [todos]);
+
+  // const handleChange = (e) => {
+  //   e.preventDefault();
+  //   setChanged(changed.map((e) => e.target.value))
+  // }
+
+  const handleEdit = (index) => {
+    setIsEdits(isEdits.map((e, i) => {
+      if (i === index)
+        return !e
+      return e
+    }))
+  }
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Counter />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <span>
-          <span>Learn </span>
-          <a
-            className="App-link"
-            href="https://reactjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux-toolkit.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux Toolkit
-          </a>
-          ,<span> and </span>
-          <a
-            className="App-link"
-            href="https://react-redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React Redux
-          </a>
-        </span>
-      </header>
-    </div>
+    <>
+      <AddTodo addTodo={props.addTodo} />
+      {todos.map((todo, index) =>
+        <li> {isEdits[index] === true ? <input value={todo.title} /> : todo.title} <button onClick={() => removeTodo(todo.id)}>DELETE</button> <button onClick={() => handleEdit(index)}>EDIT</button> </li>)}
+    </>
   );
 }
 
-export default App;
+const mapStateToProps = (state /*, ownProps*/) => {
+  return {
+    todos: state.todosReducer.todoList,
+  }
+}
+const mapDispatchToProps = (dispatch) => bindActionCreators({
+  addTodo: addTodo,
+  removeTodo: removeTodo,
+
+}, dispatch)
+
+
+const AddTodo = (props) => {
+  const { addTodo } = props
+  const [value, setValue] = useState('');
+
+  const handleOnChange = (e) => {
+    setValue(e.target.value)
+  }
+  const handleAdd = () => {
+    addTodo({ title: value })
+    setValue('')
+  }
+
+  return (
+    <>
+      <h1>TODO Managers</h1>
+      <input type="text" onChange={handleOnChange} value={value} placeholder="Add a task" />
+      <button onClick={handleAdd}>Add</button>
+    </>
+  );
+}
+
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(App)
